@@ -72,3 +72,152 @@ def parse_date(s):
     try:
         d = parsedate_to_datetime(s)
     except Exception:
+        try:
+            d = datetime.fromisoformat(s.strip().replace("Z", "+00:00"))
+        except Exception:
+            return None
+    return d if d.tzinfo else d.replace(tzinfo=UTC)
+
+def local(tag):
+    return tag.rsplit("}", 1)[-1]
+
+def parse(xml, fuente, idioma):
+    out = []
+    for node in ET.fromstring(xml).iter():
+        if local(node.tag) not in ("item", "entry"):
+            continue
+        d = {}
+        for c in node:
+            k = local(c.tag)
+            if k == "link":
+                if c.get("href") and c.get("rel", "alternate") == "alternate":
+                    d.setdefault("link", c.get("href"))
+                elif c.text and c.text.strip():
+                    d.setdefault("link", c.text.strip())
+            elif k in ("pubDate", "published", "updated", "date"):
+                d.setdefault("date", c.text)
+            elif k in ("title", "description", "summary", "encoded", "content"):
+                d.setdefault(k, c.text or "")
+        link, title = d.get("link", ""), strip(d.get("title"))
+        if not title or not link.startswith("http"):
+            continue
+        resumen = strip(d.get("description") or d.get("summary") or d.get("encoded") or d.get("content"))
+        out.append({"titulo": title, "resumen": cut(resumen), "fuente": fuente, "url": link,
+                    "idioma": idioma, "dt": parse_date(d.get("date"))})
+    return out
+
+# ---------- limpieza ----------
+def norm_url(u):
+    u = re.sub(r"[?#].*$", "", u.strip().lower())
+    return re.sub(r"^https?://(www\.)?", "", u).rstrip("/")
+
+def words(t):
+    return {w for w in re.findall(r"[a-záéíóúñü0-9]{4,}", t.lower()) if w not in STOP}
+
+def same_story(a, b):
+    if norm_url(a["url"]) == norm_url(b["url"]):
+        return True
+    wa, wb = words(a["titulo"]), words(b["titulo"])
+    if not wa or not wb:
+        return a["titulo"].strip().lower() == b["titulo"].strip().lower()
+    return len(wa & wb) / min(len(wa), len(wb)) >= 0.7
+
+def relevante(i, kw):
+    if NOISE.search(i["titulo"]):
+        return False
+    en_titulo = bool(kw.search(i["titulo"]))
+    en_resumen = {m.group(0).lower() for m in kw.finditer(i["resumen"])}
+    return en_titulo or len(en_resumen) >= 2
+
+def elegir(pool, kw, n, prev_urls, ya, now):
+    """Elige hasta n notas: recientes primero, medios distintos, sin duplicados ni repetidas de ayer."""
+    base = [i for i in pool if relevante(i, kw)]
+    vistos, unicos = [], []
+    for i in sorted(base, key=lambda i: i["dt"] or datetime.min.replace(tzinfo=UTC), reverse=True):
+        if not any(same_story(i, j) for j in vistos):
+            vistos.append(i); unicos.append(i)
+    def edad(i):
+        return (now - i["dt"]) if i["dt"] else timedelta(days=999)
+    orden = ([i for i in unicos if edad(i) <= timedelta(days=4)]
+             + [i for i in unicos if timedelta(days=4) < edad(i) <= timedelta(days=10)]
+             + [i for i in unicos if edad(i) > timedelta(days=10)])
+    pick = []
+    for tope, permitir_ayer in ((1, False), (2, False), (99, False), (99, True)):
+        for i in orden:
+            if len(pick) >= n:
+                return pick
+            if i in pick or any(same_story(i, j) for j in pick + ya):
+                continue
+            if not permitir_ayer and norm_url(i["url"]) in prev_urls:
+                continue
+            if sum(1 for j in pick if j["fuente"] == i["fuente"]) >= tope:
+                continue
+            pick.append(i)
+    return pick
+
+# ---------- traducción (opcional) ----------
+def traducir(items):
+    key = os.environ.get("ANTHROPIC_API_KEY")
+    if not key:
+        return
+    for it in items:
+        if it["idioma"] != "en":
+            continue
+        try:
+            prompt = ("Traduce al español neutral este titular y resumen. Responde SOLO con JSON "
+                      '{"titulo":"...","resumen":"..."} sin explicaciones.\n\n'
+                      + json.dumps({"titulo": it["titulo"], "resumen": it["resumen"]}, ensure_ascii=False))
+            body = json.dumps({"model": "claude-haiku-4-5-20251001", "max_tokens": 500,
+                               "messages": [{"role": "user", "content": prompt}]}).encode()
+            req = urllib.request.Request("https://api.anthropic.com/v1/messages", data=body, headers={
+                "content-type": "application/json", "x-api-key": key, "anthropic-version": "2023-06-01"})
+            txt = json.load(urllib.request.urlopen(req, timeout=60))["content"][0]["text"].strip()
+            t = json.loads(re.sub(r"^```(?:json)?|```$", "", txt).strip())
+            it["titulo"], it["resumen"], it["traducido"] = t["titulo"], t["resumen"], True
+        except Exception as e:
+            print("Traducción falló:", e)
+
+def cargar(feeds, idioma):
+    pool = []
+    for fuente, urls in feeds.items():
+        for u in urls:
+            try:
+                items = parse(get(u), fuente, idioma)
+                print(f"OK  {fuente}: {len(items)} entradas ({u})")
+                pool += items
+                break
+            except Exception as e:
+                print(f"ERR {fuente}: {u} -> {e}")
+    return pool
+
+def anteriores():
+    try:
+        with open(OUT, encoding="utf-8") as f:
+            return {norm_url(x["url"]) for x in json.load(f).get("items", [])}
+    except Exception:
+        return set()
+
+def main():
+    now = datetime.now(UTC)
+    prev = anteriores()
+    pool_en = cargar(FEEDS_EN, "en")
+    pool_es = cargar(FEEDS_ES, "es")
+    es = elegir(pool_es, KW_ES, N_ES, prev, [], now)
+    # si no hay nota en español, se completa con más notas en inglés para llegar a 5
+    en = elegir(pool_en, KW_EN, N_EN + N_ES - len(es), prev, es, now)
+    pick = en + es
+    if not pick:
+        print("Sin noticias nuevas: se conserva news.json anterior.")
+        if not os.path.exists(OUT):
+            json.dump({"actualizado": None, "items": []}, open(OUT, "w", encoding="utf-8"))
+        return
+    traducir(pick)
+    for i in pick:
+        dt = i.pop("dt")
+        i["fecha"] = dt.date().isoformat() if dt else ""
+    json.dump({"actualizado": now.isoformat(timespec="seconds"), "items": pick},
+              open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+    print(f"Listo: {len(pick)} noticias ({sum(i['idioma']=='es' for i in pick)} en español).")
+
+if __name__ == "__main__":
+    main()
