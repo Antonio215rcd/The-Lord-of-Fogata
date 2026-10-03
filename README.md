@@ -18,7 +18,7 @@ Por defecto el calendario cubre **2026–2030**. Más abajo se explica cómo amp
 8. [Traducir las noticias (opcional)](#8-traducir-las-noticias-opcional)
 9. [Añadir o quitar años del calendario](#9-añadir-o-quitar-años-del-calendario)
 10. [Qué limpia el script](#10-qué-limpia-el-script)
-11. [Cambiar la hora del bot](#11-cambiar-la-hora-del-bot)
+11. [Cambiar la hora del bot (y por qué a veces se retrasa)](#11-cambiar-la-hora-del-bot-y-por-qué-a-veces-se-retrasa)
 12. [Problemas frecuentes](#12-problemas-frecuentes)
 
 ---
@@ -154,7 +154,7 @@ Una ejecución correcta dura alrededor de 50 segundos. Si falla a los 3 segundos
 
 El aviso amarillo "Node.js 20 is deprecated" es solo una advertencia de GitHub. Se puede ignorar.
 
-A partir de ahí el bot corre solo todos los días a las 11:00 UTC.
+A partir de ahí el bot corre solo, a las horas que indique el `cron` (por defecto, 9:11 y 21:11 UTC). Puede retrasarse o saltarse alguna ejecución; ver la sección 11 para la estrategia recomendada y el botón de respaldo.
 
 ---
 
@@ -266,23 +266,98 @@ Los botones saltan de línea solos, así que puedes añadir los años que quiera
 
 ---
 
-## 11. Cambiar la hora del bot
+## 11. Cambiar la hora del bot (y por qué a veces se retrasa)
 
 En `.github/workflows/noticias.yml` está esta línea:
 
 ```yaml
-- cron: "0 11 * * *"
+- cron: "11 9,21 * * *"  # 9:11 y 21:11 UTC
 ```
 
-Los números son **minuto hora** en UTC. `0 11` significa las 11:00 UTC. Algunos ejemplos:
+Los números son **minuto hora día-del-mes mes día-de-la-semana**, y la hora es siempre **UTC**. Lo que escribas después del `#` es solo un comentario: GitHub lo ignora (ponle un espacio antes del `#` y no lo metas dentro de las comillas).
+
+Ejemplos:
 
 | Quieres | Escribe |
 |---|---|
-| 07:00 UTC | `0 7 * * *` |
-| 18:30 UTC | `30 18 * * *` |
-| Dos veces al día (6:00 y 18:00) | `0 6,18 * * *` |
+| Una vez al día, 9:11 UTC | `11 9 * * *` |
+| Dos veces al día (9:11 y 21:11 UTC) | `11 9,21 * * *` |
+| Cada 6 horas (4 veces al día) | `11 */6 * * *` |
+| Cada 3 horas (8 veces al día) | `11 */3 * * *` |
+| Cada 2 horas (12 veces al día) | `11 */2 * * *` |
 
-Recuerda que la hora es UTC. En España son 1 o 2 horas más según la época del año. GitHub puede retrasar unos minutos las ejecuciones programadas.
+### Pasar de UTC a tu hora
+
+Resta o suma la diferencia de tu zona. Ejemplo para Argentina y Uruguay (UTC-3, sin cambio de verano):
+
+| UTC | Tu hora |
+|---|---|
+| 9:11 | 6:11 a.m. |
+| 21:11 | 6:11 p.m. |
+
+En España, la diferencia es +1 en invierno y +2 en verano.
+
+### Problema: el bot se ejecuta tarde, o directamente no se ejecuta
+
+Pasó en este proyecto, dos veces:
+
+1. Con el cron `0 11 * * *` (11:00 UTC, las 8:00 a.m. en Argentina), la ejecución programada corrió a las 13:34 hora local: unas 5 horas y media tarde.
+2. Con el cron `11 9,21 * * *` (6:11 a.m. y 6:11 p.m.), a las 9:30 a.m. del día siguiente **no había ninguna ejecución programada**. Hubo que lanzar el bot a mano con **Run workflow**.
+
+Esto **no es un error de tu configuración**. El archivo estaba bien escrito.
+
+**Por qué pasa:**
+- GitHub avisa en su documentación de que las tareas programadas (`schedule`) pueden retrasarse cuando hay mucha carga en sus servidores, y que no garantiza la hora exacta.
+- Las horas en punto (`0 9`, `0 11`, `0 21`) son las más saturadas, porque mucha gente programa sus tareas justo a esa hora.
+- En repositorios nuevos o con poca actividad, el retraso suele ser mayor, y a veces una ejecución se salta del todo.
+- No hay forma de arreglarlo desde el archivo: la puntualidad depende de GitHub.
+
+### Estrategia recomendada: ejecuciones frecuentes + botón manual de respaldo
+
+Como no se puede garantizar una hora exacta, la forma más fiable es no depender de una sola ejecución:
+
+1. **Ejecuciones más seguidas.** Si una se retrasa o se salta, otra llega poco después. Por ejemplo, cada 3 horas:
+
+```yaml
+- cron: "11 */3 * * *"  # 8 veces al día, minuto 11
+```
+
+   Es gratis: en un repositorio público, GitHub Actions no tiene coste. Cada ejecución dura menos de un minuto.
+
+2. **Minuto distinto de 0.** Usa `11`, `17` o `43` en vez de `0`, para esquivar la hora en punto.
+
+3. **Botón manual de respaldo.** Si ves que las noticias están viejas y necesitas algo fresco ya, ve a **Actions → Noticias diarias → Run workflow → Run workflow**. Es lo más rápido y siempre funciona, aunque todo lo demás falle.
+
+4. **Si todo falla,** revisa que la última ejecución en Actions no salga en rojo, y que **Settings → Actions → General** siga con **Allow all actions** y **Read and write permissions** (secciones 6 y 7).
+
+### Qué cambia al ejecutar más seguido
+
+El script no repite las noticias que ya están en `news.json` mientras haya otras disponibles. Eso significa que **cada ejecución renueva el tablón**:
+
+| Frecuencia | Cuántas veces cambia el tablón al día |
+|---|---|
+| `11 9,21 * * *` | 2 |
+| `11 */6 * * *` | 4 |
+| `11 */3 * * *` | 8 |
+| `11 */2 * * *` | 12 |
+
+- Si prefieres que el tablón cambie pocas veces al día, elige menos ejecuciones (y acepta que una pueda retrasarse).
+- Si prefieres que siempre haya noticias recientes, elige más ejecuciones.
+- Cuando una ejecución no encuentra noticias nuevas, el script conserva el `news.json` anterior y no cambia nada.
+
+### Alternativa avanzada: un disparador externo
+
+Servicios como cron-job.org pueden pedirle a GitHub que lance el workflow a una hora exacta, y suelen ser más puntuales que `schedule`. Requiere crear un token de GitHub y configurar el servicio, así que solo vale la pena si necesitas puntualidad estricta. Para uso normal, la estrategia de arriba es suficiente.
+
+### Cómo saber si una actualización fue manual o programada
+
+1. Ve a **Actions → Noticias diarias**.
+2. Cada ejecución indica "Manually run by..." (manual) o "Scheduled" (programada), y la hora.
+3. En la página, la línea "Actualizado" muestra la hora de la última ejecución que encontró noticias nuevas, convertida a la hora de tu dispositivo. Si una ejecución no encuentra noticias nuevas, el script conserva el `news.json` anterior y esa hora no cambia.
+
+### Cuándo empieza a valer un cambio de horario
+
+Un cambio en el `cron` vale desde el siguiente horario programado. No dispara una ejecución en el momento.
 
 ---
 
@@ -299,6 +374,9 @@ Recuerda que la hora es UTC. En España son 1 o 2 horas más según la época de
 | La página no carga | Pages no está activado o aún publica | Revisa el paso 5 y espera un par de minutos |
 | Las noticias no cambian | Alguna fuente falló o no hay noticias nuevas | Mira el log en Actions: cada fuente indica `OK` o `ERR` |
 | Los años nuevos no aparecen | Cambio sin guardar o Pages aún publica | Comprueba el commit en `index.html`, espera un par de minutos y recarga con Ctrl+F5 |
+| El bot se ejecutó horas más tarde de lo programado, o no se ejecutó | GitHub retrasa o se salta tareas programadas, sobre todo en horas en punto y en repos con poca actividad | Usa ejecuciones más frecuentes (`11 */3 * * *`), un minuto distinto de 0, y el botón **Run workflow** como respaldo (sección 11) |
+| La hora de "Actualizado" no cambió aunque el bot corrió | No había noticias nuevas y el script conserva el `news.json` anterior | Es normal. Mira en Actions si la ejecución salió en verde |
+| No sé si una actualización fue manual o programada | La página solo muestra la hora | En Actions, cada ejecución dice "Manually run" o "Scheduled" |
 | Quité un año de la lista y ningún botón queda marcado, o se ve un año sin botón | La línea de abajo (`let year=...`) todavía tiene el `2026` fijo | Cambia ese `2026` final por `YEARS[0]` (sección 9a) |
 | Quité un año y mis eventos desaparecieron | No se borraron: solo están ocultos mientras ese año no esté en la lista | Vuelve a añadir el año a `YEARS` y reaparecen. Antes de quitar años, usa **Respaldo** |
 | La lista de años quedó desordenada y abre en un año raro | El primer año de la lista es el que se abre por defecto | Ordena `YEARS` de menor a mayor |
@@ -315,4 +393,6 @@ Recuerda que la hora es UTC. En España son 1 o 2 horas más según la época de
 - [ ] Pages activado en la rama `main`, carpeta raíz
 - [ ] Read and write permissions activado
 - [ ] Probado con **Run workflow** y salió en verde
+- [ ] (Recomendado) Cron con minuto distinto de 0 y ejecuciones frecuentes, por ejemplo `11 */3 * * *`
+- [ ] Saber usar **Run workflow** como respaldo manual si una ejecución programada no llega
 - [ ] (Recomendado) Línea 246 de `index.html` con `YEARS[0]` en vez de `2026` (sección 9a)
