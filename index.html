@@ -17,6 +17,9 @@ h1{margin:0;font-family:'UnifrakturCook','Old English Text MT',serif;font-size:c
 button{font-family:'Cinzel',Georgia,serif;background:var(--paper);color:var(--blue);border:2px solid var(--gold);border-radius:4px;padding:6px 14px;cursor:pointer;font-weight:700}
 button.on{background:var(--red);color:#f0e0b8}
 button:hover{filter:brightness(1.08)}
+a.btnlink{font-family:'Cinzel',Georgia,serif;background:var(--paper);color:var(--blue);border:2px solid var(--gold);border-radius:4px;padding:6px 14px;cursor:pointer;font-weight:700;text-decoration:none;font-size:13.333px;line-height:normal;display:inline-block;box-shadow:inset 0 0 0 1px #fff7,0 1px 3px #0006;text-shadow:0 1px 0 #fff4}
+a.btnlink:hover{filter:brightness(1.08)}
+a.btnlink{font-size:13.333px}
 input[type=range]{accent-color:var(--gold);width:120px}
 main{max-width:1200px;margin:0 auto;padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
 .month{background:var(--paper);border:3px solid var(--blue);outline:2px solid var(--gold);outline-offset:-7px;border-radius:6px;box-shadow:0 4px 10px #0005}
@@ -53,6 +56,7 @@ header{background-color:var(--blue);background-size:cover;background-position:ce
 h1{text-shadow:0 2px 0 #000a,0 0 14px #b8892b88}
 @media(max-width:700px){header{position:static}}
 button{box-shadow:inset 0 0 0 1px #fff7,0 1px 3px #0006;text-shadow:0 1px 0 #fff4}
+header a.btnlink{line-height:normal}
 button.on{text-shadow:none}
 .month h2::before,.month h2::after{content:"❦";color:var(--gold);font-size:15px;margin:0 10px;vertical-align:middle}
 .month{background:radial-gradient(circle at 30% 10%,#f7ebc9,#ead6a3)}
@@ -138,7 +142,7 @@ header{position:static;padding:20px 16px}
 .bar{gap:14px 18px;margin-top:12px}
 .bar label{font-size:20px;display:flex;align-items:center;gap:12px;color:#f6ecd2}
 input[type=range]{width:220px;height:30px}
-header button{font-size:19px;padding:14px 30px;border-radius:5px}
+header button,header a.btnlink{font-size:19px;padding:14px 30px;border-radius:5px}
 #years{gap:12px!important}
 #years button{font-size:22px;padding:12px 32px}
 .legend{font-size:17px;gap:10px 22px;padding-top:18px}
@@ -181,6 +185,7 @@ main{max-width:1500px;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));g
     <button id="txtb">📋 Texto</button>
     <button id="radb">📻 Radio</button>
     <button id="newb">📰 Tablón</button>
+    <a class="btnlink" href="https://zlibraryexep-lgtm.github.io/Marquez-de-Mares/" target="_blank" rel="noopener">🛡 Hábitos</a>
   </div>
 </header>
 <div class="legend" id="leg"></div>
@@ -205,7 +210,7 @@ main{max-width:1500px;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));g
 </div></div>
 <div id="radio"><div class="box">
   <h3>📻 Radio del reino</h3>
-  <p class="sub">Emisoras de EE. UU., internacionales, de España y de Argentina con transmisión abierta. Si una no responde, prueba otra. Abre el archivo en tu navegador o desde GitHub Pages: dentro de visores o vistas previas las emisoras suelen bloquearse.</p>
+  <p class="sub">Emisoras de música de estudio, de EE. UU., internacionales, de España, de Argentina y de Corea del Norte (Pionyang) con transmisión abierta. Si una no responde, prueba otra. Abre el archivo en tu navegador o desde GitHub Pages: dentro de visores o vistas previas las emisoras suelen bloquearse.</p>
   <div class="tabs" id="rtabs"></div><div id="rlist"></div><p id="rst">Elige una emisora.</p>
   <div style="text-align:right;margin-top:12px"><button id="rstop">Detener</button> <button id="rclose">Cerrar</button></div>
 </div></div>
@@ -472,6 +477,18 @@ const RADIO=[
 ["WBJC 91.5 (Baltimore)",["https://ice64.securenetsystems.net/WBJC"]],
 ["WMNR (Connecticut)",["https://wmnr.streamguys1.com/live"]],
 ["Whisperings · piano solo",["https://pianosolo.streamguys1.com/live"]]]},
+{n:"📚 Estudio",s:[
+["SomaFM · Groove Salad (ambient y downtempo)",["https://ice.somafm.com/groovesalad","https://ice1.somafm.com/groovesalad-128-mp3","https://ice2.somafm.com/groovesalad-128-mp3"]],
+["SomaFM · Groove Salad Classic",["https://ice.somafm.com/gsclassic","https://ice1.somafm.com/gsclassic-128-mp3","https://ice2.somafm.com/gsclassic-128-mp3"]],
+["SomaFM · Drone Zone (ambient sin ritmo)",["https://ice.somafm.com/dronezone","https://ice1.somafm.com/dronezone-128-mp3","https://ice1.somafm.com/dronezone-128-aac"]],
+["SomaFM · Deep Space One (ambient profundo)",["https://ice.somafm.com/deepspaceone","https://ice1.somafm.com/deepspaceone-128-mp3","https://ice2.somafm.com/deepspaceone-128-mp3"]],
+["SomaFM · Space Station Soma",["https://ice.somafm.com/spacestation","https://ice1.somafm.com/spacestation-128-mp3","https://ice2.somafm.com/spacestation-128-mp3"]],
+["SomaFM · Synphaera (ambient cinematográfico)",["https://ice.somafm.com/synphaera","https://ice1.somafm.com/synphaera-128-mp3","https://ice2.somafm.com/synphaera-128-mp3"]],
+["SomaFM · Fluid (hip-hop instrumental)",["https://ice.somafm.com/fluid","https://ice1.somafm.com/fluid-128-mp3","https://ice2.somafm.com/fluid-128-mp3"]],
+["SomaFM · cliqhop idm",["https://ice.somafm.com/cliqhop","https://ice1.somafm.com/cliqhop-128-mp3","https://ice2.somafm.com/cliqhop-128-mp3"]],
+["FluxFM · Chillhop (lofi)",["https://streams.fluxfm.de/Chillhop/mp3-320/streams.fluxfm.de/","https://streams.fluxfm.de/Chillhop/mp3-320/audio/","https://streams.fluxfm.de/Chillhop/mp3-128/audio/"]],
+["Radio Paradise · Mellow Mix",["https://stream.radioparadise.com/mellow-320","https://stream.radioparadise.com/mellow-128"]],
+["Whisperings · piano solo",["https://pianosolo.streamguys1.com/live"]]]},
 {n:"📰 Noticias EE. UU.",s:[
 ["NPR · programa nacional",["https://npr-ice.streamguys1.com/live.mp3","https://npr-ice.streamguys1.com/live.aac","http://npr-ice.streamguys1.com/live.mp3"]],
 ["WNYC 93.9 FM (Nueva York)",["https://fm939.wnyc.org/wnycfm","https://fm939.wnyc.org/wnycfm.aac","http://fm939.wnyc.org/wnycfm"]],
@@ -524,25 +541,36 @@ const RADIO=[
 ["Metro FM 95.1",[ST+"METRO.mp3"]],
 ["Los 40 FM 105.5",["https://radios.solumedia.com:6158/stream?icy=http"]],
 ["Vorterix FM 92.1",["https://ice2.edge-apps.net/radio1_high-20057.audio"]],
-["Cadena 3 FM 100.5 (Córdoba)",["https://liveradio.mediainbox.net/radio3.mp3"]]]}
+["Cadena 3 FM 100.5 (Córdoba)",["https://liveradio.mediainbox.net/radio3.mp3"]]]},
+{n:"🇰🇵 Pionyang",s:[
+["Pyongyang FM 105.2 (música, retransmisión por internet)",["https://listen7.myradio24.com/69366"]],
+["KCBS · Radio Central de Corea (Pionyang)",["https://radio.intchoson.com/kcbs/index.m3u8"],"https://www.intchoson.com/kcbs/"],
+["Voice of Korea · Voz de Corea (servicio exterior)",["https://radio.intchoson.com/vok/index.m3u8"],"https://www.intchoson.com/vok/"]]}
 ];
-const rau=new Audio();let rcat=0,rcur=null,rname="",rurls=[],rid=0,rtm=null,rtry=0,rgot=false;
+const rau=new Audio();let rcat=0,rcur=null,rname="",rurls=[],rpage="",rid=0,rtm=null,rtry=0,rgot=false;
 const rst=document.getElementById("rst"),radb=document.getElementById("radb");
+let rhls=null,hlsP=null;
+function hlsKill(){if(rhls){try{rhls.destroy()}catch(e){}rhls=null}}
+function loadHls(){
+  if(window.Hls)return Promise.resolve(window.Hls);
+  if(!hlsP)hlsP=new Promise(r=>{const sc=document.createElement("script");sc.src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js";sc.onload=()=>r(window.Hls||null);sc.onerror=()=>{hlsP=null;r(null)};document.head.appendChild(sc)});
+  return hlsP;
+}
 function drawRadio(){
   const tb=document.getElementById("rtabs"),l=document.getElementById("rlist");tb.innerHTML="";l.innerHTML="";
   RADIO.forEach((c,i)=>{const b=document.createElement("button");b.textContent=c.n;b.className=i==rcat?"on":"";b.onclick=()=>{rcat=i;drawRadio()};tb.appendChild(b)});
-  RADIO[rcat].s.forEach(([n,u])=>{const b=document.createElement("button");b.className="st"+(rcur==u[0]?" on":"");b.textContent=(rcur==u[0]?"❚❚ ":"▶ ")+n;b.onclick=()=>playRadio(n,u);l.appendChild(b)});
+  RADIO[rcat].s.forEach(([n,u,pg])=>{const b=document.createElement("button");b.className="st"+(rcur==u[0]?" on":"");b.textContent=(rcur==u[0]?"❚❚ ":"▶ ")+n;b.onclick=()=>playRadio(n,u,pg);l.appendChild(b)});
 }
 // Un único <audio> reutilizado: en iOS/Safari conserva el permiso de reproducción del primer toque,
 // así los enlaces alternos también suenan sin pedir un gesto nuevo.
 function rclear(){clearTimeout(rtm);rau.onerror=rau.onplaying=rau.onended=null}
-function stopRadio(msg){rid++;rclear();rau.pause();rau.removeAttribute("src");try{rau.load()}catch(e){}rcur=null;radb.classList.remove("on");rst.textContent=msg||"Radio detenida."}
+function stopRadio(msg){rid++;rclear();hlsKill();rau.pause();rau.removeAttribute("src");try{rau.load()}catch(e){}rcur=null;radb.classList.remove("on");rst.textContent=msg||"Radio detenida."}
 function attempt(id,i){
   if(id!==rid)return;
-  rclear();
+  rclear();hlsKill();
   if(i>=rurls.length){
     rau.pause();rcur=null;radb.classList.remove("on");rst.textContent="No se pudo reproducir «"+rname+"» aquí. ";
-    const a=document.createElement("a");a.href=rurls[0];a.target="_blank";a.rel="noopener";a.textContent="Abrir enlace directo ↗";rst.appendChild(a);
+    const a=document.createElement("a");a.href=rpage||rurls[0];a.target="_blank";a.rel="noopener";a.textContent="Abrir enlace directo ↗";rst.appendChild(a);
     drawRadio();return;
   }
   const u=rurls[i];
@@ -554,14 +582,36 @@ function attempt(id,i){
   // Si un enlace falla: prueba el siguiente. Si ya sonaba y se cortó: reconecta (hasta 3 veces).
   const lost=()=>{if(id!=rid)return;if(rgot&&rtry<3){rtry++;rst.textContent="Reconectando con "+rname+"…";attempt(id,0)}else attempt(id,i+1)};
   rau.onerror=lost;rau.onended=lost;
-  rtm=setTimeout(()=>{if(id==rid&&rau.readyState<3)attempt(id,i+1)},10000);
-  rau.src=u;
-  const p=rau.play();
-  if(p&&p.catch)p.catch(e=>{if(id==rid&&e&&e.name=="NotAllowedError"){clearTimeout(rtm);rst.textContent="El navegador bloqueó la reproducción. Toca de nuevo la emisora."}});
+  const isHls=/\.m3u8(\?|$)/i.test(u);
+  rtm=setTimeout(()=>{if(id==rid&&rau.readyState<3)attempt(id,i+1)},isHls?30000:10000);
+  const playIt=()=>{const p=rau.play();if(p&&p.catch)p.catch(e=>{if(id==rid&&e&&e.name=="NotAllowedError"){clearTimeout(rtm);rst.textContent="El navegador bloqueó la reproducción. Toca de nuevo la emisora."}})};
+  // Enlaces HLS (.m3u8): se usa hls.js donde el navegador lo admite (Chrome, Firefox, Edge, Safari de escritorio);
+  // en iPhone (sin MSE) se usa la reproducción nativa de Safari.
+  if(isHls){
+    const nativeOk=!!rau.canPlayType("application/vnd.apple.mpegurl");
+    const useNative=()=>{if(id!==rid)return;if(nativeOk){rau.src=u;playIt()}else lost()};
+    loadHls().then(H=>{
+      if(id!==rid)return;
+      if(!H||!H.isSupported()){useNative();return}
+      let netRetry=0;
+      rhls=new H({manifestLoadingTimeOut:20000,manifestLoadingMaxRetry:3,manifestLoadingRetryDelay:1500,levelLoadingTimeOut:20000,levelLoadingMaxRetry:3,fragLoadingTimeOut:25000,fragLoadingMaxRetry:4,fragLoadingRetryDelay:1500});
+      rhls.on(H.Events.MANIFEST_PARSED,()=>{if(id===rid)playIt()});
+      rhls.on(H.Events.ERROR,(ev,d)=>{
+        if(!d||!d.fatal||id!==rid)return;
+        if(d.type===H.ErrorTypes.NETWORK_ERROR&&netRetry<2){netRetry++;rst.textContent="Reintentando conexión con "+rname+"…";try{rhls.startLoad()}catch(e){lost()}return}
+        if(d.type===H.ErrorTypes.MEDIA_ERROR&&netRetry<2){netRetry++;try{rhls.recoverMediaError()}catch(e){lost()}return}
+        // Si hls.js no puede (p. ej. el servidor no permite CORS), Safari aún puede reproducirlo de forma nativa.
+        if(nativeOk){hlsKill();useNative()}else lost();
+      });
+      rhls.loadSource(u);rhls.attachMedia(rau);
+    });
+    return;
+  }
+  rau.src=u;playIt();
 }
-function playRadio(n,urls){
+function playRadio(n,urls,pg){
   if(rcur==urls[0]){stopRadio();drawRadio();return}
-  rid++;rname=n;rurls=urls;rcur=urls[0];rtry=0;drawRadio();attempt(rid,0);
+  rid++;rname=n;rurls=urls;rpage=pg||"";rcur=urls[0];rtry=0;drawRadio();attempt(rid,0);
 }
 radb.onclick=()=>{drawRadio();document.getElementById("radio").classList.add("show")};
 document.getElementById("rclose").onclick=()=>document.getElementById("radio").classList.remove("show");
