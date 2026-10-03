@@ -1,7 +1,7 @@
 name: Noticias diarias
 on:
   schedule:
-    - cron: "0 9,21 * * *"   # todos los días a las 11:00 UTC
+    - cron: "0 9,21 * * *"   # todos los días a laa 9:00 y 21:00 UTC 
   workflow_dispatch:        # botón "Run workflow" para probar a mano
 permissions:
   contents: write
